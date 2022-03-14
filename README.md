@@ -15,3 +15,11 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
             "report-missing-dependencies": "*"
         }
     }
+
+
+## Configuration
+
+    //.rmdrc
+    {
+        ignoredPackages: ["fs", "http", "net", "url"]
+    }
