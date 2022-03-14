@@ -2,7 +2,7 @@ import glob from 'glob';
 import { readFile } from 'fs';
 import { join } from 'path';
 import throatFactory from 'throat';
-import { parse as parseTs } from 'parse-imports-ts';
+import { parse as parseTs, ImportedPackageType } from 'parse-imports-ts';
 import { rcFile } from 'rc-config-loader';
 import { error, warn } from './feedback.mjs';
 import { CommandOptions, Config } from './types.mjs';
@@ -29,9 +29,8 @@ async function readFileAsync(file: string): Promise<string> {
 }
 
 interface PackageJson {
-  dependencies: string[];
+  runtimeDependencies: string[];
   devDependencies: string[];
-  allDependencies: string[];
 }
 
 async function readPackageJson(): Promise<PackageJson> {
@@ -41,19 +40,23 @@ async function readPackageJson(): Promise<PackageJson> {
   const devDependencies = pkg.devDependencies
     ? Object.keys(pkg.devDependencies)
     : [];
-  const allDependencies = [...new Set([...dependencies, ...devDependencies])];
-  return { dependencies, devDependencies, allDependencies };
+  const peerDependencies = pkg.peerDependencies
+    ? Object.keys(pkg.peerDependencies)
+    : [];
+  const runtimeDependencies = [...new Set([...dependencies, ...peerDependencies])];
+  return { runtimeDependencies, devDependencies };
 }
 
 interface ImportDetails {
   name: string;
   files: string[];
+  type: ImportedPackageType;
 }
 
 async function parseFileTs(file: string): Promise<ImportDetails[]> {
   const code = await readFileAsync(file);
   const result = parseTs(code, file);
-  return result.map(({ name }) => ({ files: [file], name }));
+  return result.map(({ name, type }) => ({ files: [file], name, type }));
 }
 
 async function parseFile(file: string): Promise<ImportDetails[]> {
@@ -66,7 +69,10 @@ async function parseFile(file: string): Promise<ImportDetails[]> {
   }
 }
 
-async function getImportsForFiles(files: string[], config: Config | undefined): Promise<ImportDetails[]> {
+async function getImportsForFiles(
+  files: string[],
+  config: Config | undefined,
+): Promise<ImportDetails[]> {
   const imports = await Promise.all(
     files.map(
       (f: string): Promise<ImportDetails[]> => throat(() => parseFile(f)),
@@ -82,6 +88,9 @@ async function getImportsForFiles(files: string[], config: Config | undefined): 
         const newImport = acc.find((existing) => existing.name === item.name);
         if (newImport) {
           newImport.files = [...new Set([...newImport.files, ...item.files])];
+          newImport.type = newImport.type === ImportedPackageType.NormalImport
+            ? ImportedPackageType.NormalImport
+            : item.type;
         } else {
           acc.push({ ...item, files: [...item.files] });
         }
@@ -115,30 +124,46 @@ interface Errors {
 function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
   const result: Errors = { errors: [], warnings: [] };
   imports.forEach((i) => {
-    if (packageJson.dependencies.includes(i.name)) {
-      return;
+    if (i.type === ImportedPackageType.NormalImport) {
+      if (packageJson.runtimeDependencies.includes(i.name)) {
+        return;
+      }
+
+      if (i.files.length === 1) {
+        result.errors.push(
+          `The package "${i.name}" is used in the module "${i.files[0]}"; but it is missing from the dependencies in package.json.`,
+        );
+      } else if (i.files.length > 1) {
+        result.errors.push(
+          `The package "${i.name}" is used in the module "${i.files[0]}" and ${
+            i.files.length - 1
+          } other modules; but it is missing from the dependencies in package.json.`,
+        );
+      }
     }
-    if (packageJson.devDependencies.includes(i.name)) {
-      return;
-    }
-    if (i.files.length === 1) {
-      result.errors.push(
-        `The package "${i.name}" is used in the module "${i.files[0]}"; but it is missing from the dependencies in package.json.`,
-      );
-    } else if (i.files.length > 1) {
-      result.errors.push(
-        `The package "${i.name}" is used in the module "${i.files[0]}" and ${
-          i.files.length - 1
-        } other packages; but it is missing from the dependencies in package.json.`,
-      );
+    if (i.type === ImportedPackageType.TypeImport) {
+      if (packageJson.devDependencies.includes(i.name)) {
+        return;
+      }
+      if (i.files.length === 1) {
+        result.errors.push(
+          `The package "${i.name}" is used in the module "${i.files[0]}"; but it is missing from the devDependencies in package.json.`,
+        );
+      } else if (i.files.length > 1) {
+        result.errors.push(
+          `The package "${i.name}" is used in the module "${i.files[0]}" and ${
+            i.files.length - 1
+          } other modules; but it is missing from the devDependencies in package.json.`,
+        );
+      }
     }
   });
   const usedImports = imports.map((i) => i.name);
-  packageJson.dependencies.forEach((d) => {
+  packageJson.runtimeDependencies.forEach((d) => {
     if (usedImports.includes(d)) {
       return;
     }
-    result.warnings.push(
+    result.errors.push(
       `The package "${d}" is in the \`dependencies\` of package.json, but it is not used in the source folder. Remove it or move it to the \`devDependencies\`.`,
     );
   });

@@ -1118,10 +1118,10 @@ parent-module@^1.0.0:
   dependencies:
     callsites "^3.0.0"
 
-parse-imports-ts@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/parse-imports-ts/-/parse-imports-ts-1.0.0.tgz#88919b510b2c6ea4f5400fae097e0ee07f0d7dc2"
-  integrity sha512-LHa8Y+05E8anwE8F1y1oaUFl+vvkNFHivbGyXXB2MivRlO9DoJT1NVKDXytYewafHNfvCipGNCkpeN5S77TTuw==
+parse-imports-ts@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/parse-imports-ts/-/parse-imports-ts-1.0.1.tgz#22fb1b544ee43734dfe19e2bf3779bb0684015ce"
+  integrity sha512-BIuDAFyVTrfYn5ZjzvGwOSViM+T1ZPRUbqF+8gS5fZD8b9RJ72/C0Q2Cg52zUuwFz1kc4YRn3mszG31MgvQnog==
 
 path-exists@^3.0.0:
   version "3.0.0"
