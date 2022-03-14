@@ -9,3 +9,9 @@ script:
 branches:
   except:
     - master
+deploy:
+  provider: npm
+  email: "nicolas@cochard.co.uk"
+  api_key: $NPM_TOKEN
+  on:
+    tags: true
