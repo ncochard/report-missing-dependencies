@@ -31,6 +31,7 @@ async function readFileAsync(file: string): Promise<string> {
 interface PackageJson {
   runtimeDependencies: string[];
   devDependencies: string[];
+  dependencies: string[];
 }
 
 async function readPackageJson(): Promise<PackageJson> {
@@ -44,7 +45,7 @@ async function readPackageJson(): Promise<PackageJson> {
     ? Object.keys(pkg.peerDependencies)
     : [];
   const runtimeDependencies = [...new Set([...dependencies, ...peerDependencies])];
-  return { runtimeDependencies, devDependencies };
+  return { runtimeDependencies, devDependencies, dependencies };
 }
 
 interface ImportDetails {
@@ -159,7 +160,7 @@ function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
     }
   });
   const usedImports = imports.map((i) => i.name);
-  packageJson.runtimeDependencies.forEach((d) => {
+  packageJson.dependencies.forEach((d) => {
     if (usedImports.includes(d)) {
       return;
     }
