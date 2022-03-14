@@ -30,7 +30,7 @@ async function readFileAsync(file: string): Promise<string> {
 
 interface PackageJson {
   runtimeDependencies: string[];
-  devDependencies: string[];
+  typeDependencies: string[];
   dependencies: string[];
 }
 
@@ -45,7 +45,8 @@ async function readPackageJson(): Promise<PackageJson> {
     ? Object.keys(pkg.peerDependencies)
     : [];
   const runtimeDependencies = [...new Set([...dependencies, ...peerDependencies])];
-  return { runtimeDependencies, devDependencies, dependencies };
+  const typeDependencies = [...new Set([...devDependencies, ...peerDependencies])];
+  return { runtimeDependencies, typeDependencies, dependencies };
 }
 
 interface ImportDetails {
@@ -143,18 +144,18 @@ function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
       }
     }
     if (i.type === ImportedPackageType.TypeImport) {
-      if (packageJson.devDependencies.includes(i.name)) {
+      if (packageJson.typeDependencies.includes(i.name)) {
         return;
       }
       if (i.files.length === 1) {
         result.errors.push(
-          `The package "${i.name}" is used in the module "${i.files[0]}"; but it is missing from the devDependencies in package.json.`,
+          `Types from the package "${i.name}" are used in the module "${i.files[0]}". But it is missing from the devDependencies in package.json.`,
         );
       } else if (i.files.length > 1) {
         result.errors.push(
-          `The package "${i.name}" is used in the module "${i.files[0]}" and ${
+          `Types from the package "${i.name}" are used in the module "${i.files[0]}" and ${
             i.files.length - 1
-          } other modules; but it is missing from the devDependencies in package.json.`,
+          } other modules. But it is missing from the devDependencies in package.json.`,
         );
       }
     }
