@@ -44,8 +44,12 @@ async function readPackageJson(): Promise<PackageJson> {
   const peerDependencies = pkg.peerDependencies
     ? Object.keys(pkg.peerDependencies)
     : [];
-  const runtimeDependencies = [...new Set([...dependencies, ...peerDependencies])];
-  const typeDependencies = [...new Set([...devDependencies, ...peerDependencies])];
+  const runtimeDependencies = [
+    ...new Set([...dependencies, ...peerDependencies]),
+  ];
+  const typeDependencies = [
+    ...new Set([...devDependencies, ...peerDependencies]),
+  ];
   return { runtimeDependencies, typeDependencies, dependencies };
 }
 
@@ -71,22 +75,15 @@ async function parseFile(file: string): Promise<ImportDetails[]> {
   }
 }
 
-async function getImportsForFiles(
-  files: string[],
-  config: Config | undefined,
-): Promise<ImportDetails[]> {
+async function getImportsForFiles(files: string[]): Promise<ImportDetails[]> {
   const imports = await Promise.all(
     files.map(
       (f: string): Promise<ImportDetails[]> => throat(() => parseFile(f)),
     ),
   );
-  const ignoredPackages = config?.ignoredPackages || [];
   return imports.reduce(
     (acc: ImportDetails[], list: ImportDetails[]): ImportDetails[] => {
       list?.forEach((item) => {
-        if (ignoredPackages.includes(item.name)) {
-          return;
-        }
         const newImport = acc.find((existing) => existing.name === item.name);
         if (newImport) {
           newImport.files = [...new Set([...newImport.files, ...item.files])];
@@ -123,14 +120,20 @@ interface Errors {
   warnings: string[];
 }
 
-function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
+function getErrors(
+  packageJson: PackageJson,
+  imports: ImportDetails[],
+  ignoredPackages: string[],
+): Errors {
   const result: Errors = { errors: [], warnings: [] };
   imports.forEach((i) => {
     if (i.type === ImportedPackageType.NormalImport) {
       if (packageJson.runtimeDependencies.includes(i.name)) {
         return;
       }
-
+      if (ignoredPackages.includes(i.name)) {
+        return;
+      }
       if (i.files.length === 1) {
         result.errors.push(
           `The package "${i.name}" is used in the module "${i.files[0]}"; but it is missing from the dependencies in package.json.`,
@@ -147,13 +150,18 @@ function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
       if (packageJson.typeDependencies.includes(i.name)) {
         return;
       }
+      if (ignoredPackages.includes(i.name)) {
+        return;
+      }
       if (i.files.length === 1) {
         result.errors.push(
           `Types from the package "${i.name}" are used in the module "${i.files[0]}". But it is missing from the devDependencies in package.json.`,
         );
       } else if (i.files.length > 1) {
         result.errors.push(
-          `Types from the package "${i.name}" are used in the module "${i.files[0]}" and ${
+          `Types from the package "${i.name}" are used in the module "${
+            i.files[0]
+          }" and ${
             i.files.length - 1
           } other modules. But it is missing from the devDependencies in package.json.`,
         );
@@ -162,6 +170,9 @@ function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
   });
   const usedImports = imports.map((i) => i.name);
   packageJson.dependencies.forEach((d) => {
+    if (ignoredPackages.includes(d)) {
+      return;
+    }
     if (usedImports.includes(d)) {
       return;
     }
@@ -172,14 +183,29 @@ function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
   return result;
 }
 
-export async function processSourceFolder(): Promise<Errors> {
+const defaultConfig: Config = {
+  ignoredPackages: ['fs', 'http', 'net', 'url'],
+};
+
+async function getConfig(): Promise<Config> {
   const config = await rcFile<Config>(configName);
+  return config?.config || defaultConfig;
+}
+
+export async function processSourceFolder(): Promise<Errors> {
+  const config = await getConfig();
   const command = getCommand();
   const pkgJsonPromise = readPackageJson();
   const sourceFiles = await getSourceFiles(command);
-  const imports = await getImportsForFiles(sourceFiles, config?.config);
+  const imports = await getImportsForFiles(
+    sourceFiles,
+  );
   const packageJson = await pkgJsonPromise;
-  return getErrors(packageJson, imports);
+  return getErrors(
+    packageJson,
+    imports,
+    config.ignoredPackages || [],
+  );
 }
 
 export async function main(): Promise<void> {
