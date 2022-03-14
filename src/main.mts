@@ -1,35 +1,16 @@
 import glob from 'glob';
 import { readFile } from 'fs';
 import { join } from 'path';
-import parseImports from 'parse-imports';
 import throatFactory from 'throat';
-import ts from 'typescript';
+import { parse as parseTs } from 'parse-imports-ts';
+import { rcFile } from 'rc-config-loader';
 import { error, warn } from './feedback.mjs';
-import { CommandOptions } from './types.mjs';
+import { CommandOptions, Config } from './types.mjs';
 import { getCommand } from './command.mjs';
+import { configName } from './constants.mjs';
 
 const MAX_NUMBER_OF_FILES_CONCURENTLY_OPENED = 50;
 const throat = throatFactory(MAX_NUMBER_OF_FILES_CONCURENTLY_OPENED);
-
-function getPackageName(name: string): string|undefined {
-  const parts = name.split('/').filter((p) => p?.length > 0);
-  if (parts.length === 0) {
-    throw new Error(`Invalid package: ${name}`);
-  }
-  if (['.', '..'].includes(parts[0])) {
-    return undefined;
-  }
-  if (parts.length === 1) {
-    return parts[0];
-  }
-  if (parts.length > 1) {
-    if (parts[0].startsWith('@')) {
-      return `${parts[0]}/${parts[1]}`;
-    }
-    return parts[0];
-  }
-  throw new Error(`Invalid package: ${name}`);
-}
 
 async function readFileAsync(file: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -48,117 +29,72 @@ async function readFileAsync(file: string): Promise<string> {
 }
 
 interface PackageJson {
-    dependencies: string[];
-    devDependencies: string[];
-    allDependencies: string[];
+  dependencies: string[];
+  devDependencies: string[];
+  allDependencies: string[];
 }
 
 async function readPackageJson(): Promise<PackageJson> {
   const code = await readFileAsync('package.json');
   const pkg = JSON.parse(code);
   const dependencies = pkg.dependencies ? Object.keys(pkg.dependencies) : [];
-  const devDependencies = pkg.devDependencies ? Object.keys(pkg.devDependencies) : [];
+  const devDependencies = pkg.devDependencies
+    ? Object.keys(pkg.devDependencies)
+    : [];
   const allDependencies = [...new Set([...dependencies, ...devDependencies])];
   return { dependencies, devDependencies, allDependencies };
 }
 
 interface ImportDetails {
-    name: string;
-    files: string[];
-}
-function parseTsImportDeclaration(importDeclaration: ts.Node): Promise<string | undefined> {
-  return new Promise<string|undefined>((resolve) => {
-    ts.forEachChild(importDeclaration, (child: ts.Node) => {
-      if (ts.isStringLiteral(child)) {
-        resolve(getPackageName(JSON.parse(child.getText())));
-      }
-    });
-  });
+  name: string;
+  files: string[];
 }
 
-function parseTsEqualsDeclaration(importDeclaration: ts.Node): Promise<string | undefined> {
-  return new Promise<string|undefined>((resolve) => {
-    let index = 0;
-    ts.forEachChild(importDeclaration, (child: ts.Node) => {
-      if (index === 0 && !ts.isImportClause(child)) {
-        resolve(undefined);
-      }
-      if (index === 1 && ts.isStringLiteral(child)) {
-        resolve(child.getText());
-      }
-      index += 1;
-    });
-  });
-}
-
-async function parseTsSourceFile(sourceFile: ts.Node): Promise<string[]> {
-  const result: Promise<string>[] = [];
-  ts.forEachChild(sourceFile, (child: ts.Node) => {
-    if (ts.isImportDeclaration(child)) {
-      result.push(parseTsImportDeclaration(child));
-    }
-    if (ts.isImportEqualsDeclaration(child)) {
-      result.push(parseTsEqualsDeclaration(child));
-    }
-  });
-  return (await Promise.all(result)).filter((x) => x?.length > 0);
-}
-
-async function parseFileMethod2(file: string): Promise<ImportDetails[]> {
+async function parseFileTs(file: string): Promise<ImportDetails[]> {
   const code = await readFileAsync(file);
-  const sc = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true);
-  if (ts.isSourceFile(sc)) {
-    return (await parseTsSourceFile(sc)).map((name) => ({
-      files: [file], name,
-    }));
-  }
-  return [];
-}
-
-async function parseFileMethod1(file: string): Promise<ImportDetails[]> {
-  const code = await readFileAsync(file);
-  const imports = [...(await parseImports(code))];
-  return imports
-    .filter((i) => i.moduleSpecifier.type === 'package')
-    .map((i) => ({
-      files: [file],
-      name: getPackageName(i.moduleSpecifier.value),
-    }));
+  const result = parseTs(code, file);
+  return result.map(({ name }) => ({ files: [file], name }));
 }
 
 async function parseFile(file: string): Promise<ImportDetails[]> {
   try {
-    return await parseFileMethod1(file);
-  } catch (err1) {
-    try {
-      return await parseFileMethod2(file);
-    } catch (err2) {
-      error(`Could not parse "${file}"`);
-      error(err1);
-      error(err2);
-      return [];
-    }
+    return parseFileTs(file);
+  } catch (e) {
+    error(`Could not parse "${file}"`);
+    error(e);
+    return [];
   }
 }
 
-async function getImportsForFiles(files: string[]): Promise<ImportDetails[]> {
+async function getImportsForFiles(files: string[], config: Config | undefined): Promise<ImportDetails[]> {
   const imports = await Promise.all(
-    files.map((f: string): Promise<ImportDetails[]> => throat(() => parseFile(f))),
+    files.map(
+      (f: string): Promise<ImportDetails[]> => throat(() => parseFile(f)),
+    ),
   );
-  return imports.reduce((acc: ImportDetails[], list: ImportDetails[]): ImportDetails[] => {
-    list.forEach((item) => {
-      const newImport = acc.find((existing) => existing.name === item.name);
-      if (newImport) {
-        newImport.files = [...new Set([...newImport.files, ...item.files])];
-      } else {
-        acc.push({ ...item, files: [...item.files] });
-      }
-    });
-    return acc;
-  }, [] as ImportDetails[]);
+  const ignoredPackages = config?.ignoredPackages || [];
+  return imports.reduce(
+    (acc: ImportDetails[], list: ImportDetails[]): ImportDetails[] => {
+      list?.forEach((item) => {
+        if (ignoredPackages.includes(item.name)) {
+          return;
+        }
+        const newImport = acc.find((existing) => existing.name === item.name);
+        if (newImport) {
+          newImport.files = [...new Set([...newImport.files, ...item.files])];
+        } else {
+          acc.push({ ...item, files: [...item.files] });
+        }
+      });
+      return acc;
+    },
+    [] as ImportDetails[],
+  );
 }
 
-function getSourceFiles({ src }: Pick<CommandOptions, 'src'>): Promise<string[]> {
+function getSourceFiles({
+  src,
+}: Pick<CommandOptions, 'src'>): Promise<string[]> {
   return new Promise<string[]>((resolve, reject) => {
     const forFiles = (err: Error, files: string[]) => {
       if (err) {
@@ -172,8 +108,8 @@ function getSourceFiles({ src }: Pick<CommandOptions, 'src'>): Promise<string[]>
 }
 
 interface Errors {
-    errors: string[];
-    warnings: string[];
+  errors: string[];
+  warnings: string[];
 }
 
 function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
@@ -209,13 +145,18 @@ function getErrors(packageJson: PackageJson, imports: ImportDetails[]): Errors {
   return result;
 }
 
-export async function main(): Promise<void> {
+export async function processSourceFolder(): Promise<Errors> {
+  const config = await rcFile<Config>(configName);
   const command = getCommand();
   const pkgJsonPromise = readPackageJson();
   const sourceFiles = await getSourceFiles(command);
-  const imports = await getImportsForFiles(sourceFiles);
+  const imports = await getImportsForFiles(sourceFiles, config?.config);
   const packageJson = await pkgJsonPromise;
-  const { errors, warnings } = getErrors(packageJson, imports);
+  return getErrors(packageJson, imports);
+}
+
+export async function main(): Promise<void> {
+  const { errors, warnings } = await processSourceFolder();
   warnings.forEach((e) => warn(e));
   errors.forEach((e) => error(e));
   if (errors.length > 0) {

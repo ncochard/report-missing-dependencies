@@ -27,9 +27,10 @@
         "noEmit": false,
         "pretty": false,
         "outDir": "./dist",
+        "declarationDir": "./types",
         "rootDir": "./src",
-        "tsBuildInfoFile": "./.cache/tsBuildInfoFile",
+        "tsBuildInfoFile": "./.cache",
         "downlevelIteration": true
     },
-    "include": ["./src/**/*.ts", "./src/**/*.mts"]
+    "include": ["./src/**/*.mts"]
 }

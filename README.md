@@ -7,7 +7,7 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
         "name": "your-project",
         ...
         "scripts": {
-            "check": "report-missing-dependencies",
+            "pre-build": "report-missing-dependencies",
             "tsc": "tsc --build tsconfig.json",
             "build": "npm run check && npm run tsc"
         },

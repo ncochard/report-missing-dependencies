@@ -1,36 +1,45 @@
 {
     "name": "report-missing-dependencies",
     "version": "1.0.0",
-    "main": "dist/index.js",
-    "sideEffects": false,
-    "author": "Nicolas Cochard (nicolas@cochard.co.uk)",
     "repository": {
         "type": "git",
         "url": "https://github.com/ncochard/report-missing-dependencies.git"
     },
-    "bin": "./bin/report-missing-dependencies.mjs",
     "license": "MIT",
+    "author": "Nicolas Cochard (nicolas@cochard.co.uk)",
+    "sideEffects": false,
+    "type": "module",
+    "main": "dist/cjs/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/types/index.d.ts",
+    "typings": "dist/types/index.d.ts",
+    "bin": "./bin/report-missing-dependencies.mjs",
     "scripts": {
-        "clean": "npx rimraf dist",
-        "purge": "npx rimraf dist node_modules",
-        "build": "tsc --build tsconfig.json",
+        "build": "npm run lint && npm run tsc",
+        "clean": "npx rimraf dist .cache",
         "lint": "eslint ./src/ --ext ts,json,mts --quiet --fix",
-        "start": "node ./bin/report-missing-dependencies.mjs"
+        "purge": "npx rimraf dist .cache node_modules yarn.lock",
+        "start": "node ./bin/report-missing-dependencies.mjs",
+        "tsc": "tsc --build tsconfig.json"
+    },
+    "dependencies": {
+        "chalk": "^5.0.1",
+        "commander": "^9.0.0",
+        "fs": "^0.0.1-security",
+        "glob": "^7.2.0",
+        "parse-imports-ts": "^1.0.0",
+        "path": "^0.12.7",
+        "rc-config-loader": "^4.0.0",
+        "throat": "^6.0.1"
     },
     "devDependencies": {
         "@types/node": "^17.0.21",
-        "@typescript-eslint/eslint-plugin": "^5.12.1",
-        "@typescript-eslint/parser": "^5.12.1",
-        "eslint": "8.2.0",
-        "eslint-config-airbnb-base": "15.0.0",
-        "eslint-plugin-import": "2.25.2"
-    },
-    "dependencies": {
-        "chalk": "^5.0.0",
-        "commander": "^9.0.0",
-        "glob": "^7.2.0",
-        "parse-imports": "^1.1.0",
-        "throat": "^6.0.1",
-        "typescript": "^4.5.5"
+        "@typescript-eslint/eslint-plugin": "^5.14.0",
+        "@typescript-eslint/parser": "^5.14.0",
+        "eslint": "^8.11.0",
+        "eslint-config-airbnb-typescript": "^16.1.2",
+        "eslint-plugin-import": "^2.25.4",
+        "ts-node": "^10.7.0",
+        "typescript": "^4.6.2"
     }
 }

@@ -1,5 +1,4 @@
 .cache/
-.cache/
 node_modules/
 tsconfig.json
-.eslintrc.js
+.eslintrc.cjs
