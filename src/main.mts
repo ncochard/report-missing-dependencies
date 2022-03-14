@@ -205,7 +205,7 @@ const defaultConfig: Config = {
 };
 
 async function getConfig(): Promise<Config> {
-  const config = await rcFile<Config>(configName);
+  const config = await rcFile<Config>(configName, { packageJSON: true });
   return config?.config || defaultConfig;
 }
 
