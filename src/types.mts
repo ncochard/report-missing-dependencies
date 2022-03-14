@@ -4,5 +4,6 @@ export interface CommandOptions {
 }
 
 export interface Config {
-  ignoredPackages?: string[];
+  ignoredDependencies?: string[];
+  runtimeDependencies?: string[];
 }

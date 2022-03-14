@@ -123,15 +123,17 @@ interface Errors {
 function getErrors(
   packageJson: PackageJson,
   imports: ImportDetails[],
-  ignoredPackages: string[],
+  ignoredDependencies: string[],
+  runtimeDependencies: string[],
 ): Errors {
   const result: Errors = { errors: [], warnings: [] };
+  // Report any package used in the src folder that are not specified in the dependencies or peerDependencies.
   imports.forEach((i) => {
     if (i.type === ImportedPackageType.NormalImport) {
       if (packageJson.runtimeDependencies.includes(i.name)) {
         return;
       }
-      if (ignoredPackages.includes(i.name)) {
+      if (ignoredDependencies.includes(i.name)) {
         return;
       }
       if (i.files.length === 1) {
@@ -146,11 +148,12 @@ function getErrors(
         );
       }
     }
+    // Report any type package used in the src folder that are not specified in the devDependencies.
     if (i.type === ImportedPackageType.TypeImport) {
       if (packageJson.typeDependencies.includes(i.name)) {
         return;
       }
-      if (ignoredPackages.includes(i.name)) {
+      if (ignoredDependencies.includes(i.name)) {
         return;
       }
       if (i.files.length === 1) {
@@ -168,9 +171,13 @@ function getErrors(
       }
     }
   });
+  // Report any package specified in the dependencies that are not used in the src folder.
   const usedImports = imports.map((i) => i.name);
   packageJson.dependencies.forEach((d) => {
-    if (ignoredPackages.includes(d)) {
+    if (ignoredDependencies.includes(d)) {
+      return;
+    }
+    if (runtimeDependencies.includes(d)) {
       return;
     }
     if (usedImports.includes(d)) {
@@ -180,11 +187,21 @@ function getErrors(
       `The package "${d}" is in the \`dependencies\` of package.json, but it is not used in the source folder. Remove it or move it to the \`devDependencies\`.`,
     );
   });
+  // Report any package that are not used in the src folder but still need to be added to the dependencies section of the package.json.
+  runtimeDependencies.forEach((d) => {
+    if (packageJson.dependencies.includes(d)) {
+      return;
+    }
+    result.errors.push(
+      `The package "${d}" is missing from the \`dependencies\` section of package.json.`,
+    );
+  });
   return result;
 }
 
 const defaultConfig: Config = {
-  ignoredPackages: ['fs', 'http', 'net', 'url'],
+  ignoredDependencies: ['fs', 'http', 'net', 'url'],
+  runtimeDependencies: [],
 };
 
 async function getConfig(): Promise<Config> {
@@ -204,7 +221,8 @@ export async function processSourceFolder(): Promise<Errors> {
   return getErrors(
     packageJson,
     imports,
-    config.ignoredPackages || [],
+    config?.ignoredDependencies || [],
+    config?.runtimeDependencies || [],
   );
 }
 
