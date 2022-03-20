@@ -19,7 +19,9 @@
         "clean": "npx rimraf dist .cache",
         "lint": "eslint ./src/ --ext ts,json,mts --quiet --fix",
         "purge": "npx rimraf dist .cache node_modules yarn.lock",
-        "start": "node ./bin/report-missing-dependencies.mjs",
+        "scan-src": "node ./bin/report-missing-dependencies.mjs",
+        "scan-dist": "node ./bin/report-missing-dependencies.mjs --src dist",
+        "start": "npm run scan-src && npm run scan-dist",
         "tsc": "tsc --build tsconfig.json"
     },
     "dependencies": {

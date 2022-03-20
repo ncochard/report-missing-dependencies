@@ -47,9 +47,7 @@ async function readPackageJson(): Promise<PackageJson> {
   const runtimeDependencies = [
     ...new Set([...dependencies, ...peerDependencies]),
   ];
-  const typeDependencies = [
-    ...new Set([...devDependencies, ...peerDependencies]),
-  ];
+  const typeDependencies = devDependencies;
   return { runtimeDependencies, typeDependencies, dependencies };
 }
 
