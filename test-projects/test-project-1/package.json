@@ -1,0 +1,9 @@
+{
+    "name": "test-project-1",
+    "dependencies": {
+        "lodash": "*"
+    },
+    "rmd": {
+        "ignoredDependencies": ["url"]
+    }
+}

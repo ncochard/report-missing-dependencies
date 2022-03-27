@@ -1,0 +1,1 @@
+import type { Component } from "react";

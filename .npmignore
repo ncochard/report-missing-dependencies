@@ -2,3 +2,10 @@
 node_modules/
 tsconfig.json
 .eslintrc.cjs
+/dist/**/*.test.*
+/src/**/*.test.ts
+test-projects/
+.eslintrc.js
+.gitattributes
+.travis.yml
+jest.config.js

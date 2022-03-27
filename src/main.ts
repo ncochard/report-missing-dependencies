@@ -1,55 +1,15 @@
 import glob from 'glob';
-import { readFile } from 'fs';
 import { join } from 'path';
 import throatFactory from 'throat';
 import { parse as parseTs, ImportedPackageType } from 'parse-imports-ts';
-import { rcFile } from 'rc-config-loader';
-import { error, warn } from './feedback.mjs';
-import { CommandOptions, Config } from './types.mjs';
-import { getCommand } from './command.mjs';
-import { configName } from './constants.mjs';
+import { error, warn } from './feedback';
+import { Config, getCommand } from './command';
+import { getConfig, mergeConfigs } from './configuration';
+import { readFileAsync } from './fs';
+import { PackageJson, readPackageJson } from './package-json';
 
 const MAX_NUMBER_OF_FILES_CONCURENTLY_OPENED = 50;
 const throat = throatFactory(MAX_NUMBER_OF_FILES_CONCURENTLY_OPENED);
-
-async function readFileAsync(file: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    readFile(file, (err1: Error, data: Buffer) => {
-      try {
-        if (err1) {
-          reject(err1);
-        } else {
-          resolve(data.toString());
-        }
-      } catch (err2) {
-        reject(err2);
-      }
-    });
-  });
-}
-
-interface PackageJson {
-  runtimeDependencies: string[];
-  typeDependencies: string[];
-  dependencies: string[];
-}
-
-async function readPackageJson(): Promise<PackageJson> {
-  const code = await readFileAsync('package.json');
-  const pkg = JSON.parse(code);
-  const dependencies = pkg.dependencies ? Object.keys(pkg.dependencies) : [];
-  const devDependencies = pkg.devDependencies
-    ? Object.keys(pkg.devDependencies)
-    : [];
-  const peerDependencies = pkg.peerDependencies
-    ? Object.keys(pkg.peerDependencies)
-    : [];
-  const runtimeDependencies = [
-    ...new Set([...dependencies, ...peerDependencies]),
-  ];
-  const typeDependencies = devDependencies;
-  return { runtimeDependencies, typeDependencies, dependencies };
-}
 
 interface ImportDetails {
   name: string;
@@ -100,7 +60,7 @@ async function getImportsForFiles(files: string[]): Promise<ImportDetails[]> {
 
 function getSourceFiles({
   src,
-}: Pick<CommandOptions, 'src'>): Promise<string[]> {
+}: Pick<Config, 'src'>): Promise<string[]> {
   return new Promise<string[]>((resolve, reject) => {
     const forFiles = (err: Error, files: string[]) => {
       if (err) {
@@ -197,21 +157,11 @@ function getErrors(
   return result;
 }
 
-const defaultConfig: Config = {
-  ignoredDependencies: ['fs', 'http', 'net', 'url'],
-  runtimeDependencies: [],
-};
-
-async function getConfig(): Promise<Config> {
-  const config = await rcFile<Config>(configName, { packageJSON: true });
-  return config?.config || defaultConfig;
-}
-
-export async function processSourceFolder(): Promise<Errors> {
-  const config = await getConfig();
-  const command = getCommand();
-  const pkgJsonPromise = readPackageJson();
-  const sourceFiles = await getSourceFiles(command);
+export async function processSourceFolder(commandLine: Partial<Config>): Promise<Errors> {
+  const configFile = getConfig(commandLine);
+  const config = mergeConfigs(commandLine, configFile);
+  const pkgJsonPromise = readPackageJson(config);
+  const sourceFiles = await getSourceFiles(config);
   const imports = await getImportsForFiles(
     sourceFiles,
   );
@@ -225,7 +175,8 @@ export async function processSourceFolder(): Promise<Errors> {
 }
 
 export async function main(): Promise<void> {
-  const { errors, warnings } = await processSourceFolder();
+  const commandLine = getCommand();
+  const { errors, warnings } = await processSourceFolder(commandLine);
   warnings.forEach((e) => warn(e));
   errors.forEach((e) => error(e));
   if (errors.length > 0) {

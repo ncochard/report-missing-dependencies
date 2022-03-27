@@ -1,5 +1,5 @@
-import { error } from './feedback.mjs';
-import { main } from './main.mjs';
+import { error } from './feedback';
+import { main } from './main';
 
 (async (): Promise<void> => {
   try {
