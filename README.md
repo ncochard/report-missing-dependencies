@@ -18,27 +18,32 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
         }
     }
 
-## Configuration
-
-    //.rmdrc
-    {
-        ignoredDependencies: ["fs", "http", "net", "url"],
-        runtimeDependencies: []
-    }
-
-### `ignoredDependencies`:
-Packages that are used in the `src` folder (e.g. `import fs from "fs"`) but do not need to be added to the `dependencies` section of the `package.json`.
-Default: `["fs", "http", "net", "url"]`.
-
-### `runtimeDependencies`:
-Packages that are not used in an import statement in the `src` folder but still need to be specified in the `dependencies` section of the `package.json`.
-Default: `[]`.
-
 
 ## Command line
 
     Usage: report-missing-dependencies [options]
 
     Options:
-        -s, --src <src>  Source folder (default: "src")
-        -h, --help       display help for command
+    --cwd <string>                     Execution folder
+                                       (default: ".")
+    --src <string>                     Source folder (default: "src")
+    --ignoredDependencies <string...>  Packages that are used in the `src` folder
+                                       (e.g. `import fs from "fs"`) but do not
+                                       need to be added to the `dependencies`
+                                       section of the `package.json`.
+                                       (default: "fs http net url")
+    --runtimeDependencies <string...>  Packages that are not used in an import
+                                       statement in the `src` folder but still
+                                       need to be specified in the `dependencies`
+                                       section of the `package.json`.
+                                       (default: "")
+    -h, --help                         display help for command
+
+## Configuration
+
+    //.rmdrc
+    {
+        src: "src",
+        ignoredDependencies: ["fs", "http", "net", "url"],
+        runtimeDependencies: []
+    }
