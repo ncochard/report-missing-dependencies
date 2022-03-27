@@ -1,7 +1,7 @@
 # Check all the dependencies in the `package.json`
 This utility will parse the `*.js` files and the `*.ts` files in your `src` folder to identify all packages used in the `import {xxx} from "package"` statement. And it will report an error if that package is missing from the `package.json`.
 
-## Featues
+## Features
  - Reports an error if a package (e.g. `import {xx} from "my-package"`) is used in the `src` folder but not defined in the `dependencies` section (or `peerDependencies` section) of the `package.json`.
  - Reports an error if a type is imported from a package (e.g. `import type {MyType} from "my-package"`) but that package is not in the `devDependencies` section of the `package.json`.
 ## Usage
