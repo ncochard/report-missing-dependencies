@@ -4,12 +4,13 @@ import { defaultConfig, getCommand } from './command';
 describe('getCommand', () => {
   it('finds the default values', () => {
     const {
-      cwd, src, ignoredDependencies, runtimeDependencies,
+      cwd, src, ignoredDependencies, runtimeDependencies, testMatch,
     } = getCommand();
     expect(cwd).toEqual(process.cwd());
     expect(src).toEqual(resolve('./src'));
     expect(ignoredDependencies).toEqual(defaultConfig.ignoredDependencies);
     expect(runtimeDependencies).toEqual(defaultConfig.runtimeDependencies);
+    expect(testMatch).toEqual(defaultConfig.testMatch);
   });
   it('find the correct src folder', () => {
     const cwd = './test-projects/test-project-1';
@@ -36,5 +37,13 @@ describe('getCommand', () => {
       '--runtimeDependencies', 'url',
     ]);
     expect(command.runtimeDependencies).toEqual(['url']);
+  });
+  it('parses the correct testMatch', () => {
+    const command = getCommand([
+      'node.exe',
+      'report-missing-dependencies.js',
+      '--testMatch', '**/__tests__/**/*.[jt]s?(x)', '--testMatch', '**/?(*.)+(spec|test).[jt]s?(x)',
+    ]);
+    expect(command.testMatch).toEqual(['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)']);
   });
 });

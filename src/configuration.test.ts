@@ -6,10 +6,11 @@ describe('getConfig', () => {
   it('gets the default values', () => {
     const cwd = '.';
     const config = getConfig({ cwd });
-    expect(config.ignoredDependencies).toEqual(['fs', 'http', 'net', 'url']);
-    expect(config.runtimeDependencies).toEqual([]);
+    expect(config.ignoredDependencies).toEqual(defaultConfig.ignoredDependencies);
+    expect(config.runtimeDependencies).toEqual(defaultConfig.runtimeDependencies);
     expect(config.cwd).toEqual(process.cwd());
     expect(config.src).toEqual(resolve('src'));
+    expect(config.testMatch).toEqual(defaultConfig.testMatch);
   });
   it('reads from the package.json', () => {
     const cwd = './test-projects/test-project-2';
@@ -48,15 +49,21 @@ describe('mergeConfigs', () => {
     expect(config.src).toEqual('dist/cjs');
   });
   it('configuration file overrides default values', () => {
+    const testMatch = ['*.test.js'];
+    const src = 'dist';
+    const ignoredDependencies = ['net'];
+    const runtimeDependencies = ['fs'];
     const commandLine: Partial<Config> = defaultConfig;
     const configFile: Partial<Config> = {
-      ignoredDependencies: ['net'],
-      runtimeDependencies: ['fs'],
-      src: 'dist',
+      ignoredDependencies,
+      runtimeDependencies,
+      src,
+      testMatch,
     };
     const config = mergeConfigs(commandLine, configFile);
     expect(config.ignoredDependencies).toEqual(['net']);
     expect(config.runtimeDependencies).toEqual(['fs']);
-    expect(config.src).toEqual('dist');
+    expect(config.src).toEqual(src);
+    expect(config.testMatch).toEqual(testMatch);
   });
 });

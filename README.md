@@ -1,4 +1,4 @@
-# Check all the dependencies in the `package.json`
+# `report-missing-dependencies`: Check all the dependencies in the `package.json`
 This utility will parse the `*.js` files and the `*.ts` files in your `src` folder to identify all packages used in the `import {xxx} from "package"` statement. And it will report an error if that package is missing from the `package.json`.
 
 ## Features
@@ -37,6 +37,8 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
                                        need to be specified in the `dependencies`
                                        section of the `package.json`.
                                        (default: "")
+    --testMatch <string...>            The glob patterns uses to detect test files.
+                                       (default: "**/__tests__/**/*.?(m)[jt]s?(x) **/?(*.)+(spec|test).?(m)[jt]s?(x)")
     -h, --help                         display help for command
 
 ## Configuration
@@ -45,9 +47,18 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
     {
         src: "src",
         ignoredDependencies: ["fs", "http", "net", "url"],
-        runtimeDependencies: []
+        runtimeDependencies: [],
+        testMatch: ["**/__tests__/**/*.?(m)[jt]s?(x)", "**/?(*.)+(spec|test).?(m)[jt]s?(x)"]
     }
 
-## See also
+## Why
 
-- https://github.com/depcheck/depcheck
+Invalid dependencies in the `package.json` of a project can cause any issues.
+
+- E.g. When working on a mono-repo using a toold like NX, a missing dependency on one of the projects in the mono-repo can cause NX not to compile the missing dependency causing errors at runtime.
+- E.g. When working on a mono-repo using a toold like NX, a extraneout dependency on one of the projects in the mono-repo can cause NX compile the extraneous dependency causing a slower development cycle.
+- E.g. If a runtime dependency is incorrectly places in the `devDependencies` rather than the `dependencies`, you will not notice any issue in development mode (because `yarn install` installs all dependencies in the `node_modules` folder), but you will experience some runtime errors in production (because `yarn isntall --production` does not install dev dependencies).
+
+You can arguably use [`depcheck`](https://github.com/depcheck/depcheck) to identify missing dependencies.
+In fact, `depcheck` has many more options than `report-missing-dependencies`.
+But `report-missing-dependencies` has the advantage that it can be used in the Continuous Integration pipeline.

@@ -63,16 +63,25 @@ function mergeCwd(commandLine: Partial<Config>, configFile: Partial<Config>): st
   return defaultConfig.cwd;
 }
 
+function mergeTestMatch(commandLine: Partial<Config>, configFile: Partial<Config>): string[] {
+  if (commandLine.testMatch?.length >= 0 && !same(commandLine.testMatch, defaultConfig.testMatch)) {
+    return commandLine.testMatch;
+  }
+  if (configFile.testMatch?.length >= 0 && !same(configFile.testMatch, defaultConfig.testMatch)) {
+    return configFile.testMatch;
+  }
+  return defaultConfig.testMatch;
+}
+
 export function mergeConfigs(commandLine: Partial<Config>, configFile: Partial<Config>): Config {
-  const src = mergeSrc(commandLine, configFile);
-  const cwd = mergeCwd(commandLine, configFile);
   return {
     ...defaultConfig,
     ...configFile,
     ...commandLine,
     ignoredDependencies: mergeIgnoredDependencies(commandLine, configFile),
     runtimeDependencies: mergeRuntimeDependencies(commandLine, configFile),
-    src,
-    cwd,
+    testMatch: mergeTestMatch(commandLine, configFile),
+    src: mergeSrc(commandLine, configFile),
+    cwd: mergeCwd(commandLine, configFile),
   };
 }

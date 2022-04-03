@@ -10,6 +10,7 @@ export interface Config {
   ignoredDependencies: string[],
   runtimeDependencies: string[],
   debug: boolean;
+  testMatch: string[],
 }
 
 export const defaultConfig: Config = {
@@ -18,6 +19,9 @@ export const defaultConfig: Config = {
   ignoredDependencies: ['fs', 'http', 'net', 'url'],
   runtimeDependencies: [],
   debug: true,
+  testMatch: [
+    '**/__tests__/**/*.?(m)[jt]s?(x)',
+    '**/?(*.)+(spec|test).?(m)[jt]s?(x)'],
 };
 
 export function getCommand(argv: string[] = process.argv): Config {
@@ -26,6 +30,7 @@ export function getCommand(argv: string[] = process.argv): Config {
   program.option('--src <string>', 'Source folder', 'src');
   program.option('--ignoredDependencies <string...>', 'Packages that are used in the `src` folder (e.g. `import fs from "fs"`) but do not need to be added to the `dependencies` section of the `package.json`.', defaultConfig.ignoredDependencies.join(' '));
   program.option('--runtimeDependencies <string...>', 'Packages that are not used in an import statement in the `src` folder but still need to be specified in the `dependencies` section of the `package.json`.', defaultConfig.runtimeDependencies.join(' '));
+  program.option('--testMatch <string...>', 'The glob patterns uses to detect test files.', defaultConfig.testMatch.join(' '));
   program.parse(argv);
   const options = program.opts();
   let cwd = `${options.cwd}`;
@@ -41,11 +46,20 @@ export function getCommand(argv: string[] = process.argv): Config {
   if (Array.isArray(options.runtimeDependencies)) {
     runtimeDependencies = options.runtimeDependencies as string[];
   }
+  let testMatch = defaultConfig.testMatch || [];
+  if (Array.isArray(options.testMatch)) {
+    testMatch = options.testMatch as string[];
+  }
   const debug: boolean = options.debug === true;
   if (!src) {
     error('Missing --src parameter');
   }
   return {
-    src, debug, cwd, ignoredDependencies: ignoredDependencies.filter(dedupe), runtimeDependencies: runtimeDependencies.filter(dedupe),
+    src,
+    debug,
+    cwd,
+    ignoredDependencies: ignoredDependencies.filter(dedupe),
+    runtimeDependencies: runtimeDependencies.filter(dedupe),
+    testMatch: testMatch.filter(dedupe),
   };
 }
