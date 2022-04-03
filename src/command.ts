@@ -27,17 +27,17 @@ export const defaultConfig: Config = {
 export function getCommand(argv: string[] = process.argv): Config {
   const defaultCwd = process.cwd();
   program.option('--cwd <string>', 'Execution folder', process.cwd());
-  program.option('--src <string>', 'Source folder', 'src');
+  program.option('--src <string>', 'Source folder', defaultConfig.src);
   program.option('--ignoredDependencies <string...>', 'Packages that are used in the `src` folder (e.g. `import fs from "fs"`) but do not need to be added to the `dependencies` section of the `package.json`.', defaultConfig.ignoredDependencies.join(' '));
   program.option('--runtimeDependencies <string...>', 'Packages that are not used in an import statement in the `src` folder but still need to be specified in the `dependencies` section of the `package.json`.', defaultConfig.runtimeDependencies.join(' '));
   program.option('--testMatch <string...>', 'The glob patterns uses to detect test files.', defaultConfig.testMatch.join(' '));
   program.parse(argv);
-  const options = program.opts();
-  let cwd = `${options.cwd}`;
+  const options = program.opts<Config>();
+  let { cwd } = options;
   if (cwd !== defaultCwd) {
     cwd = resolve('.', cwd);
   }
-  const src = resolve(cwd, `${options.src}`);
+  const src = resolve(cwd, options.src);
   let ignoredDependencies = defaultConfig.ignoredDependencies || [];
   if (Array.isArray(options.ignoredDependencies)) {
     ignoredDependencies = options.ignoredDependencies as string[];
