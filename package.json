@@ -26,7 +26,7 @@
         "commander": "^9.0.0",
         "fs": "^0.0.1-security",
         "glob": "^7.2.0",
-        "parse-imports-ts": "^1.0.2",
+        "parse-imports-ts": "^1.0.3",
         "path": "^0.12.7",
         "rc-config-loader": "^4.0.0",
         "throat": "^6.0.1"

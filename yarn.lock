@@ -2915,10 +2915,10 @@ parent-module@^1.0.0:
   dependencies:
     callsites "^3.0.0"
 
-parse-imports-ts@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/parse-imports-ts/-/parse-imports-ts-1.0.2.tgz#c2d81c1b08a4957a38874383107b7aaa9c0f8304"
-  integrity sha512-IEVzC9mj8uj2b3QgJTOWBlL5cWPbyIhVgrFT52xzXltUs/8vD/3r2U27g1+E119c5RQkkjrwy3pLTWXzQIFDaw==
+parse-imports-ts@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/parse-imports-ts/-/parse-imports-ts-1.0.3.tgz#9d1f29f0e5a6a0acafd7259853a059bf4662b5a0"
+  integrity sha512-JmwWRHAgtG7VzQ/vPOii0MDgIvGt8RQnlmuo/9jB3wXyDLD8wV2v1F1jf51DHQh8eWaDwY3ihswoEvivQH0oXg==
 
 parse-json@^5.2.0:
   version "5.2.0"
