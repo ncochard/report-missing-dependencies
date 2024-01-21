@@ -20,15 +20,17 @@ describe('processSourceFolder', () => {
       const cwd = './test-projects/test-project-3';
       const result = await processSourceFolder({ cwd });
       expect(result.errors.length).toEqual(1);
-      expect(result.errors[0]).toMatch(/The package "lodash" is used in the module ".+index\.ts"; but it is missing from the dependencies in package\.json\./);
+      expect(result.errors[0]).toMatch(/The package "lodash" is used in the module ".+index\.ts"\. But it is missing from the dependencies \(or peerDependencies\) in package\.json\./);
     });
   });
   describe('test-project-4', () => {
     it('Reports a missing dependency', async () => {
       const cwd = './test-projects/test-project-4';
       const result = await processSourceFolder({ cwd });
-      expect(result.errors.length).toEqual(1);
-      expect(result.errors[0]).toMatch(/Types from the package "react" are used in the module ".+index\.ts". But it is missing from the devDependencies in package\.json\./);
+      expect(result.errors.length).toEqual(3);
+      expect(result.errors[0]).toMatch(/Types from the package "react" are used in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
+      expect(result.errors[1]).toMatch(/Types from the package "library-with-types" are used in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
+      expect(result.errors[2]).toMatch(/The package "library-with-object" is used in the module ".+index\.ts"\. But it is missing from the dependencies \(or peerDependencies\) in package\.json\./);
     });
   });
   describe('test-project-5', () => {

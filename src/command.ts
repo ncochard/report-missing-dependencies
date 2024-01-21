@@ -1,5 +1,6 @@
 import { program } from 'commander';
 import { resolve } from 'path';
+import { builtinModules } from 'module';
 import { error } from './feedback';
 
 const dedupe = (item: string, pos: number, list: string[]): boolean => list.indexOf(item) === pos;
@@ -16,7 +17,7 @@ export interface Config {
 export const defaultConfig: Config = {
   src: 'src',
   cwd: process.cwd(),
-  ignoredDependencies: ['fs', 'http', 'net', 'url'],
+  ignoredDependencies: [...builtinModules],
   runtimeDependencies: [],
   debug: true,
   testMatch: [

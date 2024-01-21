@@ -55,7 +55,7 @@ async function parseFileTs(file: FileDetails): Promise<ImportDetails[]> {
 
 async function parseFile(file: FileDetails): Promise<ImportDetails[]> {
   try {
-    return parseFileTs(file);
+    return await parseFileTs(file);
   } catch (e) {
     error(`Could not parse "${file}"`);
     error(e);
@@ -124,6 +124,7 @@ async function getTestFiles({
 
 interface Errors {
   errors: string[];
+  warnings: string[];
 }
 
 function getErrors(
@@ -147,13 +148,13 @@ function getErrors(
       }
       if (i.files.length === 1) {
         result.errors.push(
-          `The package "${i.name}" is used in the module "${i.files[0]}"; but it is missing from the dependencies in package.json.`,
+          `The package "${i.name}" is used in the module "${i.files[0]}". But it is missing from the dependencies (or peerDependencies) in package.json.`,
         );
       } else if (i.files.length > 1) {
         result.errors.push(
           `The package "${i.name}" is used in the module "${i.files[0]}" and ${
             i.files.length - 1
-          } other modules; but it is missing from the dependencies in package.json.`,
+          } other modules. But it is missing from the dependencies (or peerDependencies) in package.json.`,
         );
       }
     }
