@@ -43,10 +43,11 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
 
 ## Configuration
 
-    //.rmdrc
-    {
+    //.rmdrc.js
+    const builtinModules = require("module").builtinModules;
+    module.exports = {
         src: "src",
-        ignoredDependencies: ["fs", "http", "net", "url"],
+        ignoredDependencies: [...builtinModules],
         runtimeDependencies: [],
         testMatch: ["**/__tests__/**/*.?(m)[jt]s?(x)", "**/?(*.)+(spec|test).?(m)[jt]s?(x)"]
     }

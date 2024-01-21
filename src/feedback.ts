@@ -9,6 +9,7 @@ const o = (text: string) => chalk.magenta(text);
 export function debug(message: string): void {
   process.stdout.write(`${n} ${message} ${f}\n`);
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function error(message: any): void {
   if (typeof message === 'string') {
     process.stdout.write(`${n} ${r('ERR')} ${message} ${f}\n`);
