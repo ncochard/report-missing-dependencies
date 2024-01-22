@@ -166,13 +166,16 @@ function getErrors(
       if (ignoredDependencies.includes(i.name)) {
         return;
       }
+      if (packageJson.dependencies.includes(i.name) && runtimeDependencies.includes(i.name)) {
+        return;
+      }
       if (i.files.length === 1) {
         result.errors.push(
-          `The package "${i.name}" is only used for its types or used in a test, in the module "${i.files[0]}". But it is missing from the devDependencies in package.json.`,
+          `The package "${i.name}" is used for its types or used in a test, in the module "${i.files[0]}". But it is missing from the devDependencies in package.json.`,
         );
       } else if (i.files.length > 1) {
         result.errors.push(
-          `The package "${i.name}" is only used for its types or used in a test in the module "${
+          `The package "${i.name}" is used for its types or used in a test in the module "${
             i.files[0]
           }" and ${
             i.files.length - 1
@@ -212,14 +215,14 @@ function getErrors(
 export async function processSourceFolder(commandLine: Partial<Config>): Promise<Errors> {
   const configFile = getConfig(commandLine);
   const config = mergeConfigs(commandLine, configFile);
-  const pkgJsonPromise = readPackageJson(config);
-  const [sourceFiles, testFiles] = await Promise.all([getSourceFiles(config), getTestFiles(config)]);
-  const files = getFileList(sourceFiles, testFiles);
-  const imports = await getImportsForFiles(files);
-  const packageJson = await pkgJsonPromise;
+  const pkgJson = readPackageJson(config);
+  const sourceFiles = getSourceFiles(config);
+  const testFiles = getTestFiles(config);
+  const files = getFileList(await sourceFiles, await testFiles);
+  const imports = getImportsForFiles(files);
   return getErrors(
-    packageJson,
-    imports,
+    await pkgJson,
+    await imports,
     config?.ignoredDependencies || [],
     config?.runtimeDependencies || [],
   );

@@ -28,14 +28,21 @@ describe('processSourceFolder', () => {
       const cwd = './test-projects/test-project-4';
       const result = await processSourceFolder({ cwd });
       expect(result.errors.length).toEqual(3);
-      expect(result.errors[0]).toMatch(/The package "react" is only used for its types or used in a test, in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
-      expect(result.errors[1]).toMatch(/The package "library-with-types" is only used for its types or used in a test, in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
+      expect(result.errors[0]).toMatch(/The package "react" is used for its types or used in a test, in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
+      expect(result.errors[1]).toMatch(/The package "library-with-types" is used for its types or used in a test, in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
       expect(result.errors[2]).toMatch(/The package "library-with-object" is used in the module ".+index\.ts"\. But it is missing from the dependencies \(or peerDependencies\) in package\.json\./);
     });
   });
   describe('test-project-5', () => {
     it('Reports devDependencies from a test file', async () => {
       const cwd = './test-projects/test-project-5';
+      const result = await processSourceFolder({ cwd });
+      expect(result.errors.length).toEqual(0);
+    });
+  });
+  describe('test-project-6', () => {
+    it('Does not expect a runtime dependency to be added as a devDepencency', async () => {
+      const cwd = './test-projects/test-project-6';
       const result = await processSourceFolder({ cwd });
       expect(result.errors.length).toEqual(0);
     });

@@ -1,0 +1,9 @@
+{
+    "name": "test-project-6",
+    "dependencies": {
+        "my-http": "*"
+    },
+    "rmd": {
+        "runtimeDependencies": ["my-http"]
+    }
+}
