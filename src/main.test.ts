@@ -28,8 +28,8 @@ describe('processSourceFolder', () => {
       const cwd = './test-projects/test-project-4';
       const result = await processSourceFolder({ cwd });
       expect(result.errors.length).toEqual(3);
-      expect(result.errors[0]).toMatch(/Types from the package "react" are used in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
-      expect(result.errors[1]).toMatch(/Types from the package "library-with-types" are used in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
+      expect(result.errors[0]).toMatch(/The package "react" is only used for its types or used in a test, in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
+      expect(result.errors[1]).toMatch(/The package "library-with-types" is only used for its types or used in a test, in the module ".+index\.ts"\. But it is missing from the devDependencies in package\.json\./);
       expect(result.errors[2]).toMatch(/The package "library-with-object" is used in the module ".+index\.ts"\. But it is missing from the dependencies \(or peerDependencies\) in package\.json\./);
     });
   });

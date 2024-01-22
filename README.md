@@ -38,7 +38,7 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
                                        section of the `package.json`.
                                        (default: "")
     --testMatch <string...>            The glob patterns uses to detect test files.
-                                       (default: "**/__tests__/**/*.?(m)[jt]s?(x) **/?(*.)+(spec|test).?(m)[jt]s?(x)")
+                                       (default: "**/__tests__/**/*.?(m|c)[jt]s?(x) **/__stories__/**/*.?(m|c)[jt]s?(x) **/?(*.)+(spec|specs|test|tests|story|stories).?(m|c)[jt]s?(x)")
     -h, --help                         display help for command
 
 ## Configuration
@@ -49,7 +49,11 @@ This utility will parse the `*.js` files and the `*.ts` files in your `src` fold
         src: "src",
         ignoredDependencies: [...builtinModules],
         runtimeDependencies: [],
-        testMatch: ["**/__tests__/**/*.?(m)[jt]s?(x)", "**/?(*.)+(spec|test).?(m)[jt]s?(x)"]
+        testMatch: [
+            "**/__tests__/**/*.?(m|c)[jt]s?(x)",
+            "**/__stories__/**/*.?(m|c)[jt]s?(x)",
+            "**/?(*.)+(spec|specs|test|tests|story|stories).?(m|c)[jt]s?(x)"
+        ]
     }
 
 ## Why

@@ -21,8 +21,9 @@ export const defaultConfig: Config = {
   runtimeDependencies: [],
   debug: true,
   testMatch: [
-    '**/__tests__/**/*.?(m)[jt]s?(x)',
-    '**/?(*.)+(spec|test).?(m)[jt]s?(x)'],
+    '**/__tests__/**/*.?(m|c)[jt]s?(x)',
+    '**/__stories__/**/*.?(m|c)[jt]s?(x)',
+    '**/?(*.)+(spec|specs|test|tests|story|stories).?(m|c)[jt]s?(x)'],
 };
 
 export function getCommand(argv: string[] = process.argv): Config {

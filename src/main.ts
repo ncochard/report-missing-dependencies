@@ -168,15 +168,15 @@ function getErrors(
       }
       if (i.files.length === 1) {
         result.errors.push(
-          `Types from the package "${i.name}" are used in the module "${i.files[0]}". But it is missing from the devDependencies in package.json.`,
+          `The package "${i.name}" is only used for its types or used in a test, in the module "${i.files[0]}". But it is missing from the devDependencies in package.json.`,
         );
       } else if (i.files.length > 1) {
         result.errors.push(
-          `Types from the package "${i.name}" are used in the module "${
+          `The package "${i.name}" is only used for its types or used in a test in the module "${
             i.files[0]
           }" and ${
             i.files.length - 1
-          } other modules. But it is missing from the devDependencies in package.json.`,
+          } other modules, or . But it is missing from the devDependencies in package.json.`,
         );
       }
     }
