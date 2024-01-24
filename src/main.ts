@@ -179,7 +179,7 @@ function getErrors(
             i.files[0]
           }" and ${
             i.files.length - 1
-          } other modules, or . But it is missing from the devDependencies in package.json.`,
+          } other modules. But it is missing from the devDependencies in package.json.`,
         );
       }
     }
